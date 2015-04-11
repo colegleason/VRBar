@@ -5314,7 +5314,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 63cd7d015270e19468bcd51bf1713f60, type: 2}
       propertyPath: m_RootOrder
-      value: 39
+      value: 37
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 63cd7d015270e19468bcd51bf1713f60, type: 2}
@@ -5834,7 +5834,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 244463847}
-  - 64: {fileID: 244463848}
   m_Layer: 0
   m_Name: Piano
   m_TagString: Untagged
@@ -5856,19 +5855,6 @@ Transform:
   - {fileID: 981631174}
   m_Father: {fileID: 6648903}
   m_RootOrder: 9
---- !u!64 &244463848
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 244463846}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_SmoothSphereCollisions: 0
-  m_Convex: 1
-  m_Mesh: {fileID: 0}
 --- !u!1 &247833031
 GameObject:
   m_ObjectHideFlags: 0
@@ -21605,7 +21591,7 @@ MonoBehaviour:
   LightMode: 2
   LoadRenderSettings: 1
   RenderAmbientLight: {r: .200000003, g: .200000003, b: .200000003, a: 1}
-  RenderSkybox: {fileID: 0}
+  RenderSkybox: {fileID: 2100000, guid: 5ba172cd3918d7c44aa6d04446119a00, type: 2}
   RenderFog: 0
   RenderFogColor: {r: .5, g: .5, b: .5, a: 1}
   RenderFogMode: 3
@@ -24339,6 +24325,7 @@ GameObject:
   - 4: {fileID: 981631174}
   - 33: {fileID: 981631176}
   - 23: {fileID: 981631175}
+  - 64: {fileID: 981631177}
   m_Layer: 0
   m_Name: Piano
   m_TagString: Untagged
@@ -24387,6 +24374,19 @@ MeshFilter:
     type: 2}
   m_PrefabInternal: {fileID: 1376010806}
   m_GameObject: {fileID: 981631173}
+  m_Mesh: {fileID: 4300002, guid: 6aceb0d6750da3a46ab80dfb9f52d8ea, type: 3}
+--- !u!64 &981631177
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 981631173}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_SmoothSphereCollisions: 0
+  m_Convex: 1
   m_Mesh: {fileID: 4300002, guid: 6aceb0d6750da3a46ab80dfb9f52d8ea, type: 3}
 --- !u!1001 &982579240
 Prefab:
@@ -25535,6 +25535,7 @@ GameObject:
   - 23: {fileID: 1036648491}
   - 114: {fileID: 1036648494}
   - 114: {fileID: 1036648493}
+  - 114: {fileID: 1036648495}
   m_Layer: 0
   m_Name: Stool
   m_TagString: Untagged
@@ -25553,6 +25554,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1214182962}
+  - {fileID: 1083418497}
   m_Father: {fileID: 1786928660}
   m_RootOrder: 37
 --- !u!23 &1036648491
@@ -25599,7 +25601,7 @@ MonoBehaviour:
   canUseStationFromStation: 1
   animatorController: {fileID: 9100000, guid: d5c1dc1662fbaa042b51be13aecb6667, type: 2}
   stationEnterPlayerLocation: {fileID: 1214182962}
-  stationExitPlayerLocation: {fileID: 1214182962}
+  stationExitPlayerLocation: {fileID: 1083418497}
   controlsObject: {fileID: 0}
 --- !u!114 &1036648494
 MonoBehaviour:
@@ -25628,6 +25630,19 @@ MonoBehaviour:
     ParameterBool: 0
     ParameterFloat: 0
     ParameterObject: {fileID: 1036648489}
+--- !u!114 &1036648495
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1036648489}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 632e6edf38d76c74398fb0be09b2ec2f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  NetworkId: 1521095954
+  Events: []
 --- !u!1001 &1038450450
 Prefab:
   m_ObjectHideFlags: 0
@@ -26378,6 +26393,33 @@ MeshFilter:
   m_PrefabInternal: {fileID: 59672141}
   m_GameObject: {fileID: 1077548277}
   m_Mesh: {fileID: 4300000, guid: cd7b4ee20a994444cb3454034359db89, type: 3}
+--- !u!1 &1083418496
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 1083418497}
+  m_Layer: 0
+  m_Name: StandPosition
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1083418497
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1083418496}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: .106916852, y: -2.38418579e-07, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 1036648490}
+  m_RootOrder: 1
 --- !u!1001 &1083584704
 Prefab:
   m_ObjectHideFlags: 0
@@ -29221,7 +29263,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1214182961}
   m_LocalRotation: {x: .500000119, y: -.5, z: -.5, w: .49999994}
-  m_LocalPosition: {x: 4.42378223e-08, y: 2.98023224e-08, z: .12240655}
+  m_LocalPosition: {x: .029722929, y: -4.17232513e-07, z: .0794217065}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1036648490}

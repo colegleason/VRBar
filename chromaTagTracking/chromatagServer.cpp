@@ -1,9 +1,20 @@
+
+// Standard C Libraries
 #include <stdio.h>
 #include <stdint.h>
 #include <inttypes.h>
 #include <ctype.h>
 #include <unistd.h>
 
+// Server Libraries
+#include <errno.h>
+#include <string.h>
+#include <unistd.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
+// Apriltags libraries
 #include "apriltags/apriltag.h"
 #include "apriltags/common/image_u8.h"
 #include "apriltags/tag36h11.h"
@@ -19,9 +30,14 @@
 #include "lib/rgb2lab.hpp" // functions to convert to rgb to lab, and seperate color channels
 #include "lib/pnm2mat.hpp" // functions to convert pnm to and from mat
 
-int main(){
+#define MY_PORT		9499
+#define MAXBUF		1024
 
-  bool showGradient = false;
+void handle_session(int session_fd){
+  
+  char buffer[MAXBUF];
+  
+  bool showGradientEdges = false;
   bool found = false;
   int w = 854;
   int h = 480;
@@ -29,7 +45,7 @@ int main(){
   VideoCapture cap(0); // open the default camera
   Size size(w,h);  // size of desired frame origionally 1280x720, 1024x576, 854x480
   if(!cap.isOpened())  // check if camera opened
-    return -1;
+    return;
   
   Mat a, b, g, frame, src;
   
@@ -69,6 +85,7 @@ int main(){
   
   while(1){
     
+    
     clock_t t;
     t = clock();
     
@@ -82,11 +99,11 @@ int main(){
     //frame = RGB2YUV(frame);                                 // Just for comparison
     frame = RGB2LAB(frame);                                   // Returns lab space
     frame = alphaLAB(frame);                                  // Look at only a channel
-
+    
     // resize(frame,src,src.size());
     
-    if(showGradient){
-      src = gradientEdges(src);                               // Show gradient for fun
+    if(showGradientEdges){
+      src = gradientEdges(src);                               // Show graprintfnt for fun
     }
     
     // determine time to convert
@@ -99,9 +116,9 @@ int main(){
     image_u8_t *im = pnm_to_image_u8(pnm);                    // Convert pnm to gray image_u8
     if (im == NULL) {                                         // Error - no image created from pnm
       std::cout << "Error, not a proper pnm" << std::endl;
-      return -1;
+      return;
     }
-
+    
     /*** Start from origional Apriltags from apriltag_demo.c ***/
     
     int hamm_hist[hamm_hist_max];
@@ -162,8 +179,8 @@ int main(){
     }
     
     //for (int i = 0; i < hamm_hist_max; i++)
-      //printf("%5d", hamm_hist[i]);
-
+    //printf("%5d", hamm_hist[i]);
+    
     sprintf(renderTime, "Render: %5.3fms", time_taken);
     sprintf(imgSize, "%dx%d", frame.cols, frame.rows);
     sprintf(outputString, "%s %s %s", renderTime, convertTime, imgSize);
@@ -196,12 +213,98 @@ int main(){
     
     imshow("Display Apriltags", src);
     
+    // Write to socket
+    sprintf(buffer, "%s %s %s", renderTime, convertTime, imgSize);
+    write(session_fd, buffer, MAXBUF);
+    
     if(waitKey(30) >= 0) break;
   }
   
   /* deallocate apriltag constructs */
   apriltag_detector_destroy(td);
   tag36h11_destroy(tf);
+}
 
+int main(int argc, char * argv[]){
+  
+  
+  /* Server From: http://www.microhowto.info/howto/listen_for_and_accept_tcp_connections_in_c */
+  
+  const char* hostname=0;
+  const char* portname="9499";
+  struct addrinfo hints;
+  memset(&hints,0,sizeof(hints));
+  hints.ai_family=AF_UNSPEC;
+  hints.ai_socktype=SOCK_STREAM;
+  hints.ai_protocol=0;
+  hints.ai_flags=AI_PASSIVE|AI_ADDRCONFIG;
+  struct addrinfo* res=0;
+
+  int err=getaddrinfo(hostname,portname,&hints,&res);
+  if (err!=0) {
+    printf("failed to resolve local socket address (err=%d)",err);
+  }
+
+  int server_fd=socket(res->ai_family,res->ai_socktype,res->ai_protocol);
+  if (server_fd==-1) {
+    printf("%s",strerror(errno));
+  }
+
+  int reuseaddr=1;
+  if (setsockopt(server_fd,SOL_SOCKET,SO_REUSEADDR,&reuseaddr,sizeof(reuseaddr))==-1) {
+    printf("%s",strerror(errno));
+  }
+  
+  if (bind(server_fd,res->ai_addr,res->ai_addrlen)==-1) {
+    printf("%s",strerror(errno));
+  }
+  
+  if (listen(server_fd,SOMAXCONN)) {
+    printf("failed to listen for connections (errno=%d)",errno);
+  }
+  
+  for (;;) {
+    int session_fd=accept(server_fd,0,0);
+    if (session_fd==-1) {
+      if (errno==EINTR) continue;
+      printf("failed to accept connection (errno=%d)",errno);
+    }
+    pid_t pid=fork();
+    if (pid==-1) {
+      printf("failed to create child process (errno=%d)",errno);
+    } else if (pid==0) {
+      close(server_fd);
+      handle_session(session_fd);
+      close(session_fd);
+      _exit(0);
+    } else {
+      close(session_fd);
+    }
+  }
+  
+  for (;;) {
+    int session_fd=accept(server_fd,0,0);
+    if (session_fd==-1) {
+      if (errno==EINTR) continue;
+      printf("failed to accept connection (errno=%d)",errno);
+    }
+    pid_t pid=fork();
+    if (pid==-1) {
+      printf("failed to create child process (errno=%d)",errno);
+    } else if (pid==0) {
+      close(server_fd);
+      handle_session(session_fd);
+      close(session_fd);
+      _exit(0);
+    } else {
+      close(session_fd);
+    }
+  }
+  
+  /* End server portion */
+  
+
+  freeaddrinfo(res);
+  
   return 0;
 }

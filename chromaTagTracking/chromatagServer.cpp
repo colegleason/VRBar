@@ -5,6 +5,7 @@
 #include <inttypes.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <vector>
 
 // Server Libraries
 #include <errno.h>
@@ -33,6 +34,55 @@
 #define MY_PORT		9499
 #define MAXBUF		1024
 
+/*
+ * Generates the object points based on the size of the chromatag
+ */
+std::vector<cv::Point3f> generateObjectPoints(float tagSize){
+  std::vector<cv::Point3f> points;
+  // Z of zero may not work properly
+  points.push_back(cv::Point3f(0.0, 0.0, 0.0));
+  points.push_back(cv::Point3f(0.0, tagSize, 0.0));
+  points.push_back(cv::Point3f(tagSize, 0.0, 0.0));
+  points.push_back(cv::Point3f(tagSize, tagSize, 0.0));
+  return points;
+}
+
+Mat getCameraMatrix(){
+  
+  //1016.37 0.0 639.5
+  //0.0 1016.37 359.5
+  //0.0 0.0 1.0
+  
+  cv::Mat cameraMatrix(3,3,cv::DataType<double>::type);
+  
+  cameraMatrix.at<double>(0,0) = 1016.37;
+  cameraMatrix.at<double>(1,0) = 0.0;
+  cameraMatrix.at<double>(2,0) = 639.5;
+  
+  cameraMatrix.at<double>(0,1) = 0.0;
+  cameraMatrix.at<double>(1,1) = 1016.37;
+  cameraMatrix.at<double>(2,1) = 1359.5;
+  
+  cameraMatrix.at<double>(0,2) = 0.0;
+  cameraMatrix.at<double>(1,2) = 0.0;
+  cameraMatrix.at<double>(2,2) = 1.0;
+  
+  return cameraMatrix;
+}
+
+Mat getCameraDist(){
+  
+  // 0.0010889 0.2442992 0.0 0.0 -0.6546799
+  std::vector<double> distCoeffs;
+  distCoeffs.push_back(0.0010889);
+  distCoeffs.push_back(0.2442992);
+  distCoeffs.push_back(0.0);
+  distCoeffs.push_back(0.0);
+  distCoeffs.push_back(-0.6546799);
+
+  return Mat(distCoeffs);
+}
+
 void handle_session(int session_fd){
   
   char buffer[MAXBUF];
@@ -41,6 +91,10 @@ void handle_session(int session_fd){
   bool found = false;
   int w = 854;
   int h = 480;
+  
+  // For homography
+  bool init = true;
+  vector<Point2f> initPts;
   
   VideoCapture cap(0); // open the default camera
   Size size(w,h);  // size of desired frame origionally 1280x720, 1024x576, 854x480
@@ -84,8 +138,7 @@ void handle_session(int session_fd){
   /* End of apriltag_demo.c */
   
   while(1){
-    
-    
+
     clock_t t;
     t = clock();
     
@@ -96,6 +149,7 @@ void handle_session(int session_fd){
     }else{
       frame = src;                                            // Keep standard image if no tag
     }
+    
     //frame = RGB2YUV(frame);                                 // Just for comparison
     frame = RGB2LAB(frame);                                   // Returns lab space
     frame = alphaLAB(frame);                                  // Look at only a channel
@@ -137,16 +191,53 @@ void handle_session(int session_fd){
       
       // draws a vertical rectangle around tag, not ideal, but easy to implement
       // det->p[corner][positon], counter clockwise
-      Point pt1 = Point(det->p[0][0], det->p[0][1]);
-      Point pt2 = Point(det->p[2][0], det->p[2][1]);
+      vector<Point2f> pts;
+      for(int i = 0; i < 4; i++)
+        pts.push_back(Point(det->p[i][0], det->p[i][1]));
       
       // If tag found flag, scale to image size
       if(found){
         Size s = src.size();
-        pt1 = Point((det->p[0][0]/w) * s.width, (det->p[0][1]/h) * s.height);
-        pt2 = Point((det->p[2][0]/w) * s.width, (det->p[2][1]/h) * s.height);
+        pts[0] = Point((det->p[0][0]/w) * s.width, (det->p[0][1]/h) * s.height);
+        pts[1] = Point((det->p[1][0]/w) * s.width, (det->p[1][1]/h) * s.height);
+        pts[2] = Point((det->p[2][0]/w) * s.width, (det->p[2][1]/h) * s.height);
+        pts[3] = Point((det->p[3][0]/w) * s.width, (det->p[3][1]/h) * s.height);
       }
-      cv::rectangle(src, pt1, pt2, cvScalar(102,255,0));
+
+      if(init){
+        initPts.push_back(pts[0]);
+        initPts.push_back(pts[1]);
+        initPts.push_back(pts[2]);
+        initPts.push_back(pts[3]);
+        init = false;
+      }
+      
+      /*
+       Mat H = findHomography(pts, initPts, CV_RANSAC ); // Position relative to start
+       std::cout << "homographymatrix: " << std::endl;
+       std::cout << "\t[ "<< H.at<float>(0,0)<<" "<<H.at<float>(1,0)<<" "<<H.at<float>(2,0)<<" ]"<<std::endl;
+       std::cout << "\t[ "<< H.at<float>(0,1)<<" "<<H.at<float>(1,1)<<" "<<H.at<float>(2,1)<<" ]"<<std::endl;
+       std::cout << "\t[ "<< H.at<float>(0,2)<<" "<<H.at<float>(1,2)<<" "<<H.at<float>(2,2)<<" ]"<<std::endl;
+       */
+      
+      //std::vector<cv::Point3f> objPts = generateObjectPoints(0.03);
+      std::vector<cv::Point3f> objPts = generateObjectPoints(3);
+      Mat cameraMatrix = getCameraMatrix();
+      Mat distCoeffs = getCameraDist();
+      Mat rvec, tvec;
+      
+      solvePnP(Mat(objPts), Mat(pts), cameraMatrix, distCoeffs, rvec, tvec, false);
+      
+      std::cout << "Rotation and Translation Matrix: " << std::endl;
+      std::cout << "\t[ "<<rvec.at<double>(0,0)<<" "<<rvec.at<double>(1,0)<<" "<<rvec.at<double>(2,0)<<" ]";
+      std::cout << "\t[ "<<tvec.at<double>(0,0)<<" ]"<<std::endl;
+      std::cout << "\t[ "<< rvec.at<double>(0,1)<<" "<<rvec.at<double>(1,1)<<" "<<rvec.at<double>(2,1)<<" ]";
+      std::cout << "\t[ "<<tvec.at<double>(0,1)<<" ]"<<std::endl;
+      std::cout << "\t[ "<< rvec.at<double>(0,2)<<" "<<rvec.at<double>(1,2)<<" "<<rvec.at<double>(2,2)<<" ]";
+      std::cout << "\t[ "<<tvec.at<double>(0,2)<<" ]"<<std::endl;
+      
+      
+      cv::rectangle(src, pts[0], pts[2], cvScalar(102,255,0));
       
       apriltag_detection_destroy(det);
     }
@@ -308,3 +399,14 @@ int main(int argc, char * argv[]){
   
   return 0;
 }
+
+
+/*
+ 
+ Rotation and Translation Matrix:
+	[ -1.2185 -0.818546 -0.497299 ]	[ -2.13746 ]
+	[ -0.818546 -0.497299 6.9472e-310 ]	[ -0.867185 ]
+	[ -0.497299 6.9472e-310 6.94726e-310 ]	[ 1.92107 ]
+
+ 
+ */

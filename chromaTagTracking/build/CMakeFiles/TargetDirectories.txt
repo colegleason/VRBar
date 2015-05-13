@@ -1,0 +1,2 @@
+/Users/cole/VRBar/chromaTagTracking/build/CMakeFiles/apriltag.dir
+/Users/cole/VRBar/chromaTagTracking/build/CMakeFiles/chromatagServer.dir

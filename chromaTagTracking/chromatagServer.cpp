@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <vector>
+#include <string>
 
 // Server Libraries
 #include <errno.h>
@@ -32,7 +33,6 @@
 #include "lib/pnm2mat.hpp" // functions to convert pnm to and from mat
 
 #define MY_PORT		9499
-#define MAXBUF		1024
 
 /*
  * Generates the object points based on the size of the chromatag
@@ -85,7 +85,7 @@ Mat getCameraDist(){
 
 void handle_session(int session_fd){
   
-  char buffer[MAXBUF];
+  int MAXBUF = sizeof(double) * 3 * 4 * 2; // RT matrix
   
   bool showGradientEdges = false;
   bool found = false;
@@ -135,10 +135,14 @@ void handle_session(int session_fd){
   long double totalFPS = 0.0;
   double count = 0.0;
   
+  char buffer[MAXBUF]; // buffer to transfer over server
+  
   /* End of apriltag_demo.c */
   
   while(1){
 
+    memset(buffer, 0, sizeof(buffer));
+    
     clock_t t;
     t = clock();
     
@@ -236,6 +240,25 @@ void handle_session(int session_fd){
       std::cout << "\t[ "<< rvec.at<double>(0,2)<<" "<<rvec.at<double>(1,2)<<" "<<rvec.at<double>(2,2)<<" ]";
       std::cout << "\t[ "<<tvec.at<double>(0,2)<<" ]"<<std::endl;
       
+
+      // Write to socket
+      sprintf(buffer, "[%s,%s,%s,%s",
+              to_string(rvec.at<double>(0,0)).c_str(),
+              to_string(rvec.at<double>(1,0)).c_str(),
+              to_string(rvec.at<double>(2,0)).c_str(),
+              to_string(tvec.at<double>(0,0)).c_str());
+      
+      sprintf(buffer, "%s,%s,%s,%s,%s", buffer,
+              to_string(rvec.at<double>(0,1)).c_str(),
+              to_string(rvec.at<double>(1,1)).c_str(),
+              to_string(rvec.at<double>(2,1)).c_str(),
+              to_string(tvec.at<double>(0,1)).c_str());
+      
+      sprintf(buffer, "%s,%s,%s,%s,%s]\n", buffer,
+              to_string(rvec.at<double>(0,2)).c_str(),
+              to_string(rvec.at<double>(1,2)).c_str(),
+              to_string(rvec.at<double>(2,2)).c_str(),
+              to_string(tvec.at<double>(0,2)).c_str());
       
       cv::rectangle(src, pts[0], pts[2], cvScalar(102,255,0));
       
@@ -246,6 +269,7 @@ void handle_session(int session_fd){
       found = false;
       sprintf(detectString, "No tag detected");
       sprintf(locationString, "No tag detected");
+      sprintf(buffer, "[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]\n");
     }else{
       found = true;
     }
@@ -305,7 +329,8 @@ void handle_session(int session_fd){
     imshow("Display Apriltags", src);
     
     // Write to socket
-    sprintf(buffer, "%s %s %s", renderTime, convertTime, imgSize);
+    // sprintf(buffer, "%s %s %s", renderTime, convertTime, imgSize);
+    
     write(session_fd, buffer, MAXBUF);
     
     if(waitKey(30) >= 0) break;

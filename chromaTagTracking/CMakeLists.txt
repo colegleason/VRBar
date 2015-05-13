@@ -9,3 +9,7 @@ target_link_libraries( apriltag ${CMAKE_SOURCE_DIR}/libapriltag.a )
 add_executable( chromatagServer chromatagServer.cpp )
 target_link_libraries( chromatagServer ${OpenCV_LIBS} )
 target_link_libraries( chromatagServer ${CMAKE_SOURCE_DIR}/libapriltag.a )
+
+add_executable( cameraCalibration ${CMAKE_SOURCE_DIR}/cameraCalibration/camera_calibration.cpp )
+target_link_libraries( cameraCalibration ${OpenCV_LIBS} )
+target_link_libraries( cameraCalibration ${CMAKE_SOURCE_DIR}/libapriltag.a )

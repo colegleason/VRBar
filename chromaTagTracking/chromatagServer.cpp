@@ -232,14 +232,23 @@ void handle_session(int session_fd){
 
       solvePnP(Mat(objPts), Mat(pts), cameraMatrix, distCoeffs, rvec, tvec, false);
 
-      std::cout << "Rotation and Translation Matrix: " << std::endl;
-      std::cout << "\t[ "<<rvec.at<double>(0,0)<<" "<<rvec.at<double>(1,0)<<" "<<rvec.at<double>(2,0)<<" ]";
-      std::cout << "\t[ "<<tvec.at<double>(0,0)<<" ]"<<std::endl;
-      std::cout << "\t[ "<< rvec.at<double>(0,1)<<" "<<rvec.at<double>(1,1)<<" "<<rvec.at<double>(2,1)<<" ]";
-      std::cout << "\t[ "<<tvec.at<double>(0,1)<<" ]"<<std::endl;
-      std::cout << "\t[ "<< rvec.at<double>(0,2)<<" "<<rvec.at<double>(1,2)<<" "<<rvec.at<double>(2,2)<<" ]";
-      std::cout << "\t[ "<<tvec.at<double>(0,2)<<" ]"<<std::endl;
 
+
+      bool found = false;
+      for(int i = 0; i < 3; i++) {
+          for(int j = 0; j < 3; j++) {
+              double d = rvec.at<double>(i, j);
+              // NaN is not equal to itself
+              if (d != d) {
+                  found = true;
+                  rvec.at<double>(i, j) = 0.0;
+              }
+          }
+    }
+
+      if (found) {
+          std::cout << "NaN found!" <<  std::endl;
+      }
 
       // Write to socket
       sprintf(buffer, "[%g,%g,%g,%g",
@@ -261,6 +270,14 @@ void handle_session(int session_fd){
               tvec.at<double>(0,2));
 
       cv::rectangle(src, pts[0], pts[2], cvScalar(102,255,0));
+
+      std::cout << "Rotation and Translation Matrix: " << std::endl;
+      std::cout << "\t[ "<<rvec.at<double>(0,0)<<" "<<rvec.at<double>(1,0)<<" "<<rvec.at<double>(2,0)<<" ]";
+      std::cout << "\t[ "<<tvec.at<double>(0,0)<<" ]"<<std::endl;
+      std::cout << "\t[ "<< rvec.at<double>(0,1)<<" "<<rvec.at<double>(1,1)<<" "<<rvec.at<double>(2,1)<<" ]";
+      std::cout << "\t[ "<<tvec.at<double>(0,1)<<" ]"<<std::endl;
+      std::cout << "\t[ "<< rvec.at<double>(0,2)<<" "<<rvec.at<double>(1,2)<<" "<<rvec.at<double>(2,2)<<" ]";
+      std::cout << "\t[ "<<tvec.at<double>(0,2)<<" ]"<<std::endl;
 
       apriltag_detection_destroy(det);
     }

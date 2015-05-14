@@ -216,13 +216,6 @@ void handle_session(int session_fd){
         init = false;
       }
 
-      /*
-       Mat H = findHomography(pts, initPts, CV_RANSAC ); // Position relative to start
-       std::cout << "homographymatrix: " << std::endl;
-       std::cout << "\t[ "<< H.at<float>(0,0)<<" "<<H.at<float>(1,0)<<" "<<H.at<float>(2,0)<<" ]"<<std::endl;
-       std::cout << "\t[ "<< H.at<float>(0,1)<<" "<<H.at<float>(1,1)<<" "<<H.at<float>(2,1)<<" ]"<<std::endl;
-       std::cout << "\t[ "<< H.at<float>(0,2)<<" "<<H.at<float>(1,2)<<" "<<H.at<float>(2,2)<<" ]"<<std::endl;
-       */
 
       //std::vector<cv::Point3f> objPts = generateObjectPoints(0.03);
       std::vector<cv::Point3f> objPts = generateObjectPoints(3);
@@ -255,19 +248,19 @@ void handle_session(int session_fd){
               rvec.at<double>(0,0),
               rvec.at<double>(1,0),
               rvec.at<double>(2,0),
-              tvec.at<double>(0,0));
+              tvec.at<double>(0));
 
       sprintf(buffer, "%s,%g,%g,%g,%g", buffer,
               rvec.at<double>(0,1),
               rvec.at<double>(1,1),
               rvec.at<double>(2,1),
-              tvec.at<double>(0,1));
+              tvec.at<double>(1));
 
       chars_written = sprintf(buffer, "%s,%g,%g,%g,%g]\n", buffer,
               rvec.at<double>(0,2),
               rvec.at<double>(1,2),
               rvec.at<double>(2,2),
-              tvec.at<double>(0,2));
+              tvec.at<double>(2));
 
       cv::rectangle(src, pts[0], pts[2], cvScalar(102,255,0));
 

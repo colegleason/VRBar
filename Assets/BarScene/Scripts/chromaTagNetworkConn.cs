@@ -54,6 +54,7 @@ public class chromaTagNetworkConn : MonoBehaviour {
 	void tracking() {
 		while (isRunning) {
 			if (!socketReady) {
+				Thread.Sleep (300);
 				setupConn (connectionIP, connectionPort);
 				continue;
 			}

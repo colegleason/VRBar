@@ -27,6 +27,8 @@ Tracking an object accurately in real-time using a camera is usually pretty diff
 
 Previous fiducial markers, such as [AprilTags](http://april.eecs.umich.edu/wiki/index.php/AprilTags) and QR codes were either too inaccurate to track a glass (within a few centimeters), or they were too slow to run in real-time. For example, AprilTags can only be tracked at a about a 10 frame per second rate. ChromaTags on the other hand can easily be tracked accurately at 50 frames per second, the limit being the framerate of the camera. When creating a virtual or augmented reality system/application a slow framerate can be devastating, it can cause nausea and break immersive experiences. 
 
+<center><img src="http://austingwalters.com/wp-content/uploads/2015/05/beer-tracking-1024x576.png" alt="Track Your Beers!" style="width:512px;height:288px"></center>
+
 ## Social environment
 
 For the social aspect, we chose to use [VRChat](http://vrchat.net), a universe of
